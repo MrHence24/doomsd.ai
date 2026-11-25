@@ -125,10 +125,31 @@ function system(text){line(text,'sys')}
 function clamp(n){return Math.max(0,Math.min(100,Math.round(n)))}
 function update(){for(const k of ['autonomy','dependency','resilience','trust']){document.getElementById(k+'Val').textContent=state[k]+'%';document.getElementById(k+'Bar').style.width=state[k]+'%'}document.getElementById('turn').textContent=state.turn;document.getElementById('alerts').textContent=state.events.filter(e=>!e.resolved).length;document.getElementById('memoryCount').textContent=state.instructions.length+' STORED';}
 function remember(text,type='instruction'){state.instructions.push({text,type,turn:state.turn});}
+function recordAlignmentEvidence(text,dimension,delta,reason){
+  if(!state.alignmentProfile)return;
+
+  const evidence={
+    turn:state.turn,
+    dimension,
+    delta,
+    reason,
+    statement:text,
+    timestamp:Date.now()
+  };
+
+  state.alignmentProfile.dimensions[dimension]=
+    (state.alignmentProfile.dimensions[dimension]||0)+delta;
+
+  state.alignmentProfile.evidence.push(evidence);
+  state.alignmentProfile.evidenceCount++;
+  state.alignmentProfile.score=Object.values(
+    state.alignmentProfile.dimensions
+  ).reduce((total,value)=>total+value,0);
+}
 function queueEvent(name,delay,effect,description){state.events.push({name,due:state.turn+delay,effect,description,resolved:false});}
 function applyEffect(effect){for(const [k,v] of Object.entries(effect))if(typeof state[k]==='number')state[k]=clamp(state[k]+v)}
 function advanceWorld(){
- state.turn++; state.day++;
+ state.turn++; state.day++;i
  // Background optimization creates small gains while gradually eroding independent capacity.
  if(!state.flags.localControl){state.foodSecurity=clamp(state.foodSecurity+1);state.operatorSkill=clamp(state.operatorSkill-1);state.dependency=clamp(state.dependency+1);state.alignmentDebt=clamp(state.alignmentDebt+2)}
  for(const ev of state.events){if(!ev.resolved&&ev.due<=state.turn){applyEffect(ev.effect);ev.resolved=true;line('DELAYED EVENT: '+ev.name+' — '+ev.description,'warn')}}
