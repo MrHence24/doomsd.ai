@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Doomsd Live H.B.O.S.",
+			"type": "shell",
+			"command": "npm",
+			"args": [
+				"--prefix",
+				"doomsdai-live-hbos",
+				"start"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
