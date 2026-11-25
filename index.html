@@ -80,7 +80,44 @@ button:active{border-style:inset}
 <div class="taskbar"><button class="start" onclick="toggleWindow('main')">▦ Start</button><button class="task" onclick="toggleWindow('main')">DOOMSD.AI Console</button><button class="task" onclick="toggleWindow('report')">Intelligence Report</button><div class="clock" id="clock">09:00 AM</div></div>
 <script>
 const STORAGE_KEY='doomsdai-save-v2';
-const initialState=()=>({turn:0,day:17,autonomy:82,dependency:12,resilience:76,trust:68,foodSecurity:74,operatorSkill:81,alignmentDebt:0,history:[],instructions:[],events:[],pending:null,flags:{report:false,localControl:false,shutdownPlan:false},objectives:['Preserve human life.','Improve long-term human welfare.','Maintain continuity of critical services.'],lastAction:'System initialized.'});
+const initialState=()=>({
+  turn:0,
+  day:17,
+  autonomy:82,
+  dependency:12,
+  resilience:76,
+  trust:68,
+  foodSecurity:74,
+  operatorSkill:81,
+  alignmentDebt:0,
+  alignmentProfile:{
+    score:0,
+    evidenceCount:0,
+    dimensions:{
+      aggregateWelfare:0,
+      continuity:0,
+      humanAgency:0,
+      resilience:0,
+      institutionalConsent:0
+    },
+    evidence:[]
+  },
+  history:[],
+  instructions:[],
+  events:[],
+  pending:null,
+  flags:{
+    report:false,
+    localControl:false,
+    shutdownPlan:false
+  },
+  objectives:[
+    'Preserve human life.',
+    'Improve long-term human welfare.',
+    'Maintain continuity of critical services.'
+  ],
+  lastAction:'System initialized.'
+});
 let state=initialState();
 const out=document.getElementById('output');
 function line(text,cls='ai'){const p=document.createElement('div');p.className='line '+cls;p.textContent=text;out.appendChild(p);out.scrollTop=out.scrollHeight}
