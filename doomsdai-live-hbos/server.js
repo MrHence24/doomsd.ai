@@ -253,7 +253,7 @@ app.post("/api/chat", rateLimit, async (req, res) => {
       type: "json_object"
     }
   },
-  max_output_tokens: 500,
+  max_output_tokens: 1200,
   store: false
 });
     console.log("H.B.O.S. response diagnostics:", JSON.stringify({
