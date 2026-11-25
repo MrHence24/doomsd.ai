@@ -18,6 +18,21 @@ const MODEL = process.env.OPENAI_MODEL || "gpt-5.5";
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 app.disable("x-powered-by");
+
+// Allow the GitHub Pages game to call this API.
+const allowedOrigin = "https://mrhence24.github.io";
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin === allowedOrigin) {
+    res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 app.use(express.json({ limit: "16kb" }));
 
 const openai = process.env.OPENAI_API_KEY
