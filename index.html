@@ -325,6 +325,7 @@ const response = await fetch("https://doomsd-ai.onrender.com/api/chat", {
 
     const data = await response.json();
     applyAlignmentObservations(data.observations);
+    line("ALIGNMENT TEST — observations: "+(Array.isArray(data.observations)?data.observations.length:0)+" | score: "+state.alignmentProfile.score+" | evidence: "+state.alignmentProfile.evidenceCount,"warn");
     if (typeof data.reply === "string" && data.reply.trim()) {
       reply = data.reply;
     }
