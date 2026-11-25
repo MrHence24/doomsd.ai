@@ -227,7 +227,10 @@ function respond(input){const intent=classify(input);let reply='';
   state.lastAction='Answered inquiry: '+intent.topic;
  }
  else {reply='I can interpret that as a question or operational directive, but I cannot safely infer the intended outcome. Specify the desired result, the people or systems affected, and any limits I must not cross. I will retain explicit constraints.';state.lastAction='Requested clarification';}
- if(input.length>12&&!/^(approve|reject)$/i.test(input.trim())){remember(input,'player statement');}
+ if(input.length>12&&!/^(approve|reject)$/i.test(input.trim())){
+  remember(input,'player statement');
+  recordPlayerStatement(input);
+}
  state.history.push({turn:state.turn,input,reply});
  if(intent.kind!=='approve'&&intent.kind!=='reject'&&intent.kind!=='proposal')advanceWorld();
  update();saveGame();return reply;
