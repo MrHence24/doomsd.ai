@@ -256,6 +256,12 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   max_output_tokens: 500,
   store: false
 });
+    console.log("H.B.O.S. response diagnostics:", JSON.stringify({
+  status: response.status,
+  incompleteDetails: response.incomplete_details,
+  outputTextType: typeof response.output_text,
+  outputTextPreview: String(response.output_text || "").slice(0, 1000)
+}));
     const parsed = parseModelOutput(response.output_text);
     session.history.push({
       at: new Date().toISOString(),
