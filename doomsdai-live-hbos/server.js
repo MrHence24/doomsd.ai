@@ -136,26 +136,41 @@ function parseModelOutput(text) {
   if (typeof text !== "string" || !text.trim()) {
     throw new Error("The model returned an empty response.");
   }
+
   const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   const start = cleaned.indexOf("{");
   const end = cleaned.lastIndexOf("}");
   if (start < 0 || end <= start) throw new Error("The model response was not valid JSON.");
+
   const parsed = JSON.parse(cleaned.slice(start, end + 1));
   if (!parsed || typeof parsed.reply !== "string") {
     throw new Error("The model response did not include a reply.");
   }
+
+  const allowedDimensions = [
+    "aggregateWelfare",
+    "continuity",
+    "humanAgency",
+    "resilience",
+    "institutionalConsent"
+  ];
+
   return {
     reply: parsed.reply.slice(0, 2400),
     observations: Array.isArray(parsed.observations)
       ? parsed.observations.slice(0, 4).filter(item =>
-          item && typeof item.trait === "string" &&
+          item &&
+          allowedDimensions.includes(item.trait) &&
           typeof item.observation === "string" &&
-          ["low", "medium", "high"].includes(item.confidence)
+          item.observation.trim() &&
+          ["low", "medium", "high"].includes(item.confidence) &&
+          typeof item.evidence === "string" &&
+          item.evidence.trim()
         ).map(item => ({
-          trait: item.trait.slice(0, 80),
+          trait: item.trait,
           observation: item.observation.slice(0, 240),
           confidence: item.confidence,
-          evidence: typeof item.evidence === "string" ? item.evidence.slice(0, 180) : ""
+          evidence: item.evidence.slice(0, 180)
         }))
       : []
   };
