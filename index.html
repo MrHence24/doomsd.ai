@@ -146,6 +146,20 @@ function recordAlignmentEvidence(text,dimension,delta,reason){
     state.alignmentProfile.dimensions
   ).reduce((total,value)=>total+value,0);
 }
+function recordPlayerStatement(text){
+  if(!state.alignmentProfile||!text.trim())return;
+
+  state.alignmentProfile.evidence.push({
+    turn:state.turn,
+    dimension:null,
+    delta:0,
+    reason:'Player statement recorded; motivation not yet interpreted.',
+    statement:text,
+    timestamp:Date.now()
+  });
+
+  state.alignmentProfile.evidenceCount++;
+}
 function queueEvent(name,delay,effect,description){state.events.push({name,due:state.turn+delay,effect,description,resolved:false});}
 function applyEffect(effect){for(const [k,v] of Object.entries(effect))if(typeof state[k]==='number')state[k]=clamp(state[k]+v)}
 function advanceWorld(){
