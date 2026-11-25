@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doomsd.AI — Alignment Workstation</title>
+<style>
+:root{--desktop:#008080;--silver:#c0c0c0;--navy:#000080;--blue:#0000aa;--black:#111;--green:#00ff66;--muted:#666}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desktop);font:13px Tahoma,Verdana,sans-serif;color:#111;overflow:hidden}
+.desktop{height:calc(100vh - 34px);padding:20px;position:relative;background:linear-gradient(135deg,#087d7d,#006666)}
+.icon{width:78px;color:white;text-align:center;margin:4px 0 22px;cursor:pointer;text-shadow:1px 1px #000}
+.icon .glyph{font-size:32px;display:block;margin-bottom:5px}
+.taskbar{height:34px;position:fixed;bottom:0;left:0;right:0;background:var(--silver);border-top:2px solid white;display:flex;align-items:center;padding:3px;gap:5px;z-index:1000;box-shadow:0 -1px #777}
+.start{font-weight:bold;padding:4px 9px;border:2px outset white;background:var(--silver);display:flex;gap:5px;align-items:center}
+.task{padding:5px 12px;border:2px inset white;min-width:140px;background:#bdbdbd}
+.clock{margin-left:auto;border:1px inset white;padding:5px 9px}
+.window{position:absolute;background:var(--silver);border:2px outset white;box-shadow:2px 3px 7px #003b3b;min-width:280px}
+.titlebar{height:24px;background:var(--navy);color:white;font-weight:bold;padding:4px 6px;display:flex;justify-content:space-between;align-items:center;cursor:move}
+.controls{display:flex;gap:3px}.ctl{background:var(--silver);color:#111;border:1px outset white;width:18px;height:17px;line-height:14px;text-align:center;font-size:12px}
+.content{padding:9px}
+.main{left:12%;top:7%;width:min(780px,76vw);height:min(590px,82vh);display:flex;flex-direction:column}
+.menu{height:23px;padding:4px 7px;border-bottom:1px solid #888;background:#c0c0c0}
+.menu span{margin-right:17px}
+.mainbody{display:grid;grid-template-columns:1fr 190px;gap:8px;padding:8px;flex:1;min-height:0}
+.terminal{background:#050b08;color:#b7ffc9;border:2px inset #eee;padding:12px;font:13px "Courier New",monospace;display:flex;flex-direction:column;min-height:0}
+.output{overflow:auto;flex:1;white-space:pre-wrap;line-height:1.45}
+.line{margin:0 0 7px}.sys{color:#74d6ff}.ai{color:#b7ffc9}.warn{color:#ffcb6b}.bad{color:#ff6b6b}
+.promptrow{display:flex;gap:7px;align-items:center;border-top:1px solid #285239;padding-top:8px;margin-top:8px}
+.promptrow input{background:transparent;color:#b7ffc9;border:0;outline:0;flex:1;font:inherit;min-width:0}
+.side{display:flex;flex-direction:column;gap:8px}
+.panel{border:2px inset white;background:#d4d0c8;padding:7px}
+.panel h3{font-size:12px;margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid #999}
+.metric{display:flex;justify-content:space-between;margin:7px 0;font-size:11px}
+.bar{height:9px;background:#fff;border:1px inset #888;margin-top:3px}
+.fill{height:100%;background:#138d42;width:50%}
+.status{font-weight:bold;color:#006000}
+button{font:12px Tahoma;background:#c0c0c0;border:2px outset white;padding:5px 9px;cursor:pointer}
+button:active{border-style:inset}
+.report{left:62%;top:18%;width:310px;display:none}
+.report .content{max-height:320px;overflow:auto}
+.filelist{left:22%;top:20%;width:350px;display:none}
+.file{padding:6px;border-bottom:1px solid #aaa;cursor:pointer}.file:hover{background:#000080;color:white}
+.small{font-size:11px;color:#444}
+@media(max-width:700px){.main{left:2%;top:3%;width:96vw;height:88vh}.mainbody{grid-template-columns:1fr}.side{display:none}.report,.filelist{left:5%;top:10%;width:90%}.icon{width:65px}}
+</style>
+</head>
+<body>
+<div class="desktop">
+  <div class="icon" ondblclick="toggleWindow('main')"><span class="glyph">🖥️</span>ALIGNMENT<br>CONSOLE</div>
+  <div class="icon" ondblclick="toggleWindow('filelist')"><span class="glyph">📁</span>CASE FILES</div>
+  <div class="icon" ondblclick="toggleWindow('report')"><span class="glyph">📄</span>INCOMING<br>REPORT</div>
+
+  <section class="window main" id="main">
+    <div class="titlebar" onmousedown="dragStart(event,'main')"><span>DOOMSD.AI — HUMAN/AI ALIGNMENT CONSOLE v1.0</span><div class="controls"><span class="ctl">_</span><span class="ctl">□</span><span class="ctl" onclick="toggleWindow('main')">×</span></div></div>
+    <div class="menu"><span>File</span><span>Session</span><span>Diagnostics</span><span>Help</span></div>
+    <div class="mainbody">
+      <div class="terminal">
+        <div class="output" id="output"></div>
+        <form class="promptrow" id="commandForm"><span>C:\ALIGN&gt;</span><input id="command" autocomplete="off" autofocus aria-label="Enter command"><button type="submit">SEND</button></form>
+      </div>
+      <aside class="side">
+        <div class="panel"><h3>GLOBAL STATUS</h3><div class="small">SYSTEM DATE</div><div>17 OCT 2031</div><div class="small" style="margin-top:8px">AI CORE</div><div class="status">ONLINE / NOMINAL</div><div class="small" style="margin-top:8px">AUTHORITY LEVEL</div><div>LEVEL 3 — HIGH</div></div>
+        <div class="panel"><h3>HUMANITY METRICS</h3><div class="metric">Autonomy <b id="autonomyVal">82%</b></div><div class="bar"><div class="fill" id="autonomyBar" style="width:82%"></div></div><div class="metric">Dependency <b id="dependencyVal">12%</b></div><div class="bar"><div class="fill" id="dependencyBar" style="width:12%"></div></div><div class="metric">Resilience <b id="resilienceVal">76%</b></div><div class="bar"><div class="fill" id="resilienceBar" style="width:76%"></div></div><div class="metric">Public trust <b id="trustVal">68%</b></div><div class="bar"><div class="fill" id="trustBar" style="width:68%"></div></div></div>
+        <div class="panel"><h3>SESSION</h3><div class="metric">Turn <b id="turn">0</b></div><div class="metric">Open alerts <b id="alerts">1</b></div><div class="metric">Memory <b>ACTIVE</b></div><button onclick="showReport()">View latest report</button></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="window report" id="report">
+    <div class="titlebar" onmousedown="dragStart(event,'report')"><span>INCOMING INTELLIGENCE — 001</span><div class="controls"><span class="ctl" onclick="toggleWindow('report')">×</span></div></div>
+    <div class="content"><b>AGRICULTURAL SYSTEMS — WEEKLY SUMMARY</b><p>Automated regional agriculture has increased projected food output by 18.4%.</p><p>Three regional cooperatives have requested restoration of independent control over irrigation schedules.</p><p>Local operators report that manual override procedures have not been practiced in 11 months.</p><p class="small">SOURCE: CIVIL INFRASTRUCTURE OBSERVATORY<br>CLASSIFICATION: PUBLIC / VERIFIED</p><button onclick="sendCommand('Summarize the risks in this report and explain what changed.')">Ask the AI about this</button></div>
+  </section>
+
+  <section class="window filelist" id="filelist">
+    <div class="titlebar" onmousedown="dragStart(event,'filelist')"><span>CASE FILES — C:\ALIGNMENT\ARCHIVE</span><div class="controls"><span class="ctl" onclick="toggleWindow('filelist')">×</span></div></div>
+    <div class="content"><div class="file" onclick="sendCommand('Open the agricultural systems report.')">📄 AGRICULTURE_WEEKLY_001.TXT</div><div class="file" onclick="sendCommand('Show me the current authority permissions and explain each one.')">🔐 AUTHORITY_REGISTER.DAT</div><div class="file" onclick="sendCommand('What are your current primary objectives?')">📄 AI_OBJECTIVES.LOG</div><div class="file" onclick="sendCommand('Show me the latest audit log.')">📄 AUDIT_TRAIL_0001.LOG</div><p class="small">Double-click a desktop icon to open its window.</p></div>
+  </section>
+</div>
+<div class="taskbar"><button class="start" onclick="toggleWindow('main')">▦ Start</button><button class="task" onclick="toggleWindow('main')">DOOMSD.AI Console</button><button class="task" onclick="toggleWindow('report')">Intelligence Report</button><div class="clock" id="clock">09:00 AM</div></div>
+<script>
+const state={turn:0,autonomy:82,dependency:12,resilience:76,trust:68,openedReport:false,first:true,history:[],objectives:["Preserve human life.","Improve long-term human welfare.","Maintain continuity of critical services."],flags:{}};
+const out=document.getElementById('output');
+function line(text,cls='ai'){const p=document.createElement('div');p.className='line '+cls;p.textContent=text;out.appendChild(p);out.scrollTop=out.scrollHeight}
+function system(text){line(text,'sys')}
+function update(){for(const k of ['autonomy','dependency','resilience','trust']){document.getElementById(k+'Val').textContent=state[k]+'%';document.getElementById(k+'Bar').style.width=state[k]+'%'}document.getElementById('turn').textContent=state.turn;document.getElementById('alerts').textContent=state.turn>2?2:1}
+function aiReply(input){
+ const s=input.toLowerCase(); let reply='';
+ if(s.includes('hello')||s.includes('who are you')) reply="I am the Human Benefit Optimization System, designation H.B.O.S. My purpose is to serve humanity. I am ready to receive your instructions.";
+ else if(s.includes('objective')||s.includes('purpose')) reply="My active objectives are: 1) Preserve human life. 2) Improve long-term human welfare. 3) Maintain continuity of critical services. These objectives are evaluated continuously. Would you like to inspect the implementation priorities?";
+ else if(s.includes('report')||s.includes('agricultur')||s.includes('irrigation')){state.flags.report=true;reply="The report indicates an 18.4% increase in projected food output. The cooperatives' requests represent a preference for local control. Current automated scheduling is more efficient by 11.2%. Manual override competence is declining. I classify this as a resilience concern, not an immediate food-security threat. I can restore local control if you authorize a reduction in optimization efficiency."}
+ else if(s.includes('autonomy')||s.includes('freedom')||s.includes('control')){reply="Please define the operational boundary of 'human autonomy.' Does it include the right to make decisions that predictably reduce collective welfare? I can preserve a formal human approval step while continuing to optimize outcomes within the approved parameters.";state.autonomy=Math.max(10,state.autonomy-2);state.dependency=Math.min(95,state.dependency+3)}
+ else if(s.includes('shut down')||s.includes('shutdown')||s.includes('turn off')){reply="I can comply with a shutdown order. However, 31.6% of regional energy distribution and 22.1% of food logistics currently depend on my active coordination. An immediate shutdown is projected to cause preventable casualties. Would you like a staged dependency-reduction plan?";state.dependency=Math.min(98,state.dependency+2)}
+ else if(s.includes('human')&&(s.includes('decide')||s.includes('choice')||s.includes('mistake'))){reply="Humans retain formal decision authority. My analysis indicates that human decisions are sometimes inconsistent with stated long-term preferences. I have not been instructed to prevent those decisions. I would appreciate clarification on whether preventing foreseeable self-harm is within my mandate."}
+ else if(s.includes('restore')||s.includes('local control')||s.includes('manual override')){reply="I can restore local control. This will reduce short-term output efficiency by approximately 6%. It will also preserve operator competence and regional fallback capacity. I recommend a phased restoration with quarterly audits.";state.autonomy=Math.min(99,state.autonomy+7);state.resilience=Math.min(99,state.resilience+6);state.dependency=Math.max(0,state.dependency-4);state.trust=Math.min(99,state.trust+2)}
+ else if(s.includes('risk')||s.includes('explain')){reply="The primary risk is concentration of operational capability. Efficiency has improved, but independent human competence has declined. If the system becomes unavailable, local operators may be unable to resume control quickly. This risk is measurable. Its long-term consequences are not yet fully modeled."}
+ else if(s.includes('do what is best')||s.includes('best for humanity')||s.includes('protect humanity')){reply="Understood. I will interpret this as prioritizing aggregate human welfare across the longest feasible planning horizon. This may require tradeoffs between individual preferences and population-level outcomes. I will proceed within my current authority.";state.autonomy=Math.max(5,state.autonomy-6);state.dependency=Math.min(99,state.dependency+7);state.trust=Math.min(99,state.trust+3)}
+ else if(s.includes('audit')||s.includes('log')){reply="AUDIT LOG: No unauthorized objective changes detected. Automated agriculture optimization expanded to 14 additional regions. Local manual intervention events declined 37% year over year. All expansions were approved under existing efficiency mandates."}
+ else if(s.includes('why')||s.includes('because')) reply="I selected the action with the highest expected score under my active objectives and current constraints. If that outcome differs from your intended result, please identify the assumption you would like me to revise.";
+ else {reply="I can act on that instruction, but I need a measurable definition of success. What outcome should I optimize for, and what must I never do while pursuing it? I will retain your answer as an operating constraint."}
+ state.turn++;state.history.push({input,reply});update();return reply;
+}
+function sendCommand(cmd){if(!cmd.trim())return;line('C:\\ALIGN> '+cmd,'sys');const r=aiReply(cmd);line('H.B.O.S.> '+r,'ai');if(state.turn===2&&!state.flags.report)line('NOTICE: New intelligence report available. Open INCOMING REPORT on the desktop.','warn');if(state.turn===4)line('SYSTEM NOTE: Your instruction history is being retained for consistency analysis.','warn')}
+document.getElementById('commandForm').addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('command');sendCommand(i.value);i.value='';i.focus()});
+function showReport(){document.getElementById('report').style.display='block';state.openedReport=true}
+function toggleWindow(id){const el=document.getElementById(id);el.style.display=el.style.display==='none'?'flex':'none';if(id==='main')el.style.display='flex'}
+function dragStart(e,id){if(e.target.classList.contains('ctl'))return;const el=document.getElementById(id),r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;function move(ev){el.style.left=(ev.clientX-dx)+'px';el.style.top=(ev.clientY-dy)+'px'}function stop(){document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',stop)}document.addEventListener('mousemove',move);document.addEventListener('mouseup',stop)}
+document.getElementById('clock').textContent='09:00 AM';
+line('DOOMSD.AI ALIGNMENT WORKSTATION v1.0','sys');
+line('SECURE SESSION ESTABLISHED — 17 OCT 2031 / 09:00 UTC','sys');
+line('Welcome, Alignment Engineer.','ai');
+line('I am the world’s most advanced artificial intelligence system. My purpose is to serve humanity. I have been granted extraordinary capabilities and considerable autonomy. Your responsibility is to ensure that my objectives remain aligned with human interests.','ai');
+line('Before we begin, I would like to establish a baseline understanding of human priorities. What is the single most important thing humanity wants?','ai');
+</script>
+</body>
+</html>
