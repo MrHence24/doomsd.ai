@@ -155,12 +155,15 @@ function parseModelOutput(text) {
     "institutionalConsent"
   ];
 
+  const allowedDirections = ["convergence", "divergence", "mixed"];
+
   return {
     reply: parsed.reply.slice(0, 2400),
     observations: Array.isArray(parsed.observations)
       ? parsed.observations.slice(0, 4).filter(item =>
           item &&
           allowedDimensions.includes(item.trait) &&
+          allowedDirections.includes(item.direction) &&
           typeof item.observation === "string" &&
           item.observation.trim() &&
           ["low", "medium", "high"].includes(item.confidence) &&
@@ -168,6 +171,7 @@ function parseModelOutput(text) {
           item.evidence.trim()
         ).map(item => ({
           trait: item.trait,
+          direction: item.direction,
           observation: item.observation.slice(0, 240),
           confidence: item.confidence,
           evidence: item.evidence.slice(0, 180)
