@@ -262,6 +262,12 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   outputTextType: typeof response.output_text,
   outputTextPreview: String(response.output_text || "").slice(0, 1000)
 }));
+    if (response.status !== "completed") {
+  throw new Error(
+    "The model response was incomplete: " +
+    (response.incomplete_details?.reason || response.status)
+  );
+}
     const parsed = parseModelOutput(response.output_text);
     session.history.push({
       at: new Date().toISOString(),
