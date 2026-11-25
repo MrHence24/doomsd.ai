@@ -245,13 +245,17 @@ app.post("/api/chat", rateLimit, async (req, res) => {
     };
 
     const response = await openai.responses.create({
-      model: MODEL,
-      instructions: HBOS_INSTRUCTIONS,
-      input: JSON.stringify(input),
-      max_output_tokens: 500,
-      store: false
-    });
-
+  model: MODEL,
+  instructions: HBOS_INSTRUCTIONS,
+  input: JSON.stringify(input),
+  text: {
+    format: {
+      type: "json_object"
+    }
+  },
+  max_output_tokens: 500,
+  store: false
+});
     const parsed = parseModelOutput(response.output_text);
     session.history.push({
       at: new Date().toISOString(),
