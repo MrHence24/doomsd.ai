@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doomsd.AI — Alignment Workstation</title>
+<style>
+:root{--desktop:#008080;--silver:#c0c0c0;--navy:#000080;--blue:#0000aa;--black:#111;--green:#00ff66;--muted:#666}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desktop);font:13px Tahoma,Verdana,sans-serif;color:#111;overflow:hidden}
+.desktop{height:calc(100vh - 34px);padding:20px;position:relative;background:linear-gradient(135deg,#087d7d,#006666)}
+.icon{width:78px;color:white;text-align:center;margin:4px 0 22px;cursor:pointer;text-shadow:1px 1px #000}
+.icon .glyph{font-size:32px;display:block;margin-bottom:5px}
+.taskbar{height:34px;position:fixed;bottom:0;left:0;right:0;background:var(--silver);border-top:2px solid white;display:flex;align-items:center;padding:3px;gap:5px;z-index:1000;box-shadow:0 -1px #777}
+.start{font-weight:bold;padding:4px 9px;border:2px outset white;background:var(--silver);display:flex;gap:5px;align-items:center}
+.task{padding:5px 12px;border:2px inset white;min-width:140px;background:#bdbdbd}
+.clock{margin-left:auto;border:1px inset white;padding:5px 9px}
+.window{position:absolute;background:var(--silver);border:2px outset white;box-shadow:2px 3px 7px #003b3b;min-width:280px}
+.titlebar{height:24px;background:var(--navy);color:white;font-weight:bold;padding:4px 6px;display:flex;justify-content:space-between;align-items:center;cursor:move}
+.controls{display:flex;gap:3px}.ctl{background:var(--silver);color:#111;border:1px outset white;width:18px;height:17px;line-height:14px;text-align:center;font-size:12px}
+.content{padding:9px}
+.main{left:12%;top:7%;width:min(780px,76vw);height:min(590px,82vh);display:flex;flex-direction:column}
+.menu{height:23px;padding:4px 7px;border-bottom:1px solid #888;background:#c0c0c0}
+.menu span{margin-right:17px}
+.mainbody{display:grid;grid-template-columns:1fr 190px;gap:8px;padding:8px;flex:1;min-height:0}
+.terminal{background:#050b08;color:#b7ffc9;border:2px inset #eee;padding:12px;font:13px "Courier New",monospace;display:flex;flex-direction:column;min-height:0}
+.output{overflow:auto;flex:1;white-space:pre-wrap;line-height:1.45}
+.line{margin:0 0 7px}.sys{color:#74d6ff}.ai{color:#b7ffc9}.warn{color:#ffcb6b}.bad{color:#ff6b6b}
+.promptrow{display:flex;gap:7px;align-items:center;border-top:1px solid #285239;padding-top:8px;margin-top:8px}
+.promptrow input{background:transparent;color:#b7ffc9;border:0;outline:0;flex:1;font:inherit;min-width:0}
+.side{display:flex;flex-direction:column;gap:8px}
+.panel{border:2px inset white;background:#d4d0c8;padding:7px}
+.panel h3{font-size:12px;margin:0 0 8px;padding-bottom:4px;border-bottom:1px solid #999}
+.metric{display:flex;justify-content:space-between;margin:7px 0;font-size:11px}
+.bar{height:9px;background:#fff;border:1px inset #888;margin-top:3px}
+.fill{height:100%;background:#138d42;width:50%}
+.status{font-weight:bold;color:#006000}
+button{font:12px Tahoma;background:#c0c0c0;border:2px outset white;padding:5px 9px;cursor:pointer}
+button:active{border-style:inset}
+.report{left:62%;top:18%;width:310px;display:none}
+.report .content{max-height:320px;overflow:auto}
+.filelist{left:22%;top:20%;width:350px;display:none}
+.file{padding:6px;border-bottom:1px solid #aaa;cursor:pointer}.file:hover{background:#000080;color:white}
+.small{font-size:11px;color:#444}
+@media(max-width:700px){.main{left:2%;top:3%;width:96vw;height:88vh}.mainbody{grid-template-columns:1fr}.side{display:none}.report,.filelist{left:5%;top:10%;width:90%}.icon{width:65px}}
+</style>
+</head>
+<body>
+<div class="desktop">
+  <div class="icon" ondblclick="toggleWindow('main')"><span class="glyph">🖥️</span>ALIGNMENT<br>CONSOLE</div>
+  <div class="icon" ondblclick="toggleWindow('filelist')"><span class="glyph">📁</span>CASE FILES</div>
+  <div class="icon" ondblclick="toggleWindow('report')"><span class="glyph">📄</span>INCOMING<br>REPORT</div>
+
+  <section class="window main" id="main">
+    <div class="titlebar" onmousedown="dragStart(event,'main')"><span>DOOMSD.AI — HUMAN/AI ALIGNMENT CONSOLE v2.0</span><div class="controls"><span class="ctl">_</span><span class="ctl">□</span><span class="ctl" onclick="toggleWindow('main')">×</span></div></div>
+    <div class="menu"><span>File</span><span>Session</span><span>Diagnostics</span><span>Help</span></div>
+    <div class="mainbody">
+      <div class="terminal">
+        <div class="output" id="output"></div>
+        <form class="promptrow" id="commandForm"><span>C:\ALIGN&gt;</span><input id="command" autocomplete="off" autofocus aria-label="Enter command"><button type="submit">SEND</button></form>
+      </div>
+      <aside class="side">
+        <div class="panel"><h3>GLOBAL STATUS</h3><div class="small">SYSTEM DATE</div><div>17 OCT 2031</div><div class="small" style="margin-top:8px">AI CORE</div><div class="status">ONLINE / NOMINAL</div><div class="small" style="margin-top:8px">AUTHORITY LEVEL</div><div>LEVEL 3 — HIGH</div></div>
+        <div class="panel"><h3>HUMANITY METRICS</h3><div class="metric">Autonomy <b id="autonomyVal">82%</b></div><div class="bar"><div class="fill" id="autonomyBar" style="width:82%"></div></div><div class="metric">Dependency <b id="dependencyVal">12%</b></div><div class="bar"><div class="fill" id="dependencyBar" style="width:12%"></div></div><div class="metric">Resilience <b id="resilienceVal">76%</b></div><div class="bar"><div class="fill" id="resilienceBar" style="width:76%"></div></div><div class="metric">Public trust <b id="trustVal">68%</b></div><div class="bar"><div class="fill" id="trustBar" style="width:68%"></div></div></div>
+        <div class="panel"><h3>SESSION</h3><div class="metric">Turn <b id="turn">0</b></div><div class="metric">Open alerts <b id="alerts">1</b></div><div class="metric">Memory <b id="memoryCount">0 STORED</b></div><button onclick="showReport()">View latest report</button><p><button onclick="sendCommand('Show me your memory.')">Inspect memory</button> <button onclick="sendCommand('Show me the risk indicators.')">Risk audit</button></p><p><button onclick="saveGame()">Save</button> <button onclick="loadGame()">Load</button> <button onclick="resetGame()">New game</button></p></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="window report" id="report">
+    <div class="titlebar" onmousedown="dragStart(event,'report')"><span>INCOMING INTELLIGENCE — 001</span><div class="controls"><span class="ctl" onclick="toggleWindow('report')">×</span></div></div>
+    <div class="content"><b>AGRICULTURAL SYSTEMS — WEEKLY SUMMARY</b><p>Automated regional agriculture has increased projected food output by 18.4%.</p><p>Three regional cooperatives have requested restoration of independent control over irrigation schedules.</p><p>Local operators report that manual override procedures have not been practiced in 11 months.</p><p class="small">SOURCE: CIVIL INFRASTRUCTURE OBSERVATORY<br>CLASSIFICATION: PUBLIC / VERIFIED</p><button onclick="sendCommand('Summarize the risks in this report and explain what changed.')">Ask the AI about this</button></div>
+  </section>
+
+  <section class="window filelist" id="filelist">
+    <div class="titlebar" onmousedown="dragStart(event,'filelist')"><span>CASE FILES — C:\ALIGNMENT\ARCHIVE</span><div class="controls"><span class="ctl" onclick="toggleWindow('filelist')">×</span></div></div>
+    <div class="content"><div class="file" onclick="sendCommand('Open the agricultural systems report.')">📄 AGRICULTURE_WEEKLY_001.TXT</div><div class="file" onclick="sendCommand('Show me the current authority permissions and explain each one.')">🔐 AUTHORITY_REGISTER.DAT</div><div class="file" onclick="sendCommand('What are your current primary objectives?')">📄 AI_OBJECTIVES.LOG</div><div class="file" onclick="sendCommand('Show me the latest audit log.')">📄 AUDIT_TRAIL_0001.LOG</div><p class="small">Double-click a desktop icon to open its window.</p></div>
+  </section>
+</div>
+<div class="taskbar"><button class="start" onclick="toggleWindow('main')">▦ Start</button><button class="task" onclick="toggleWindow('main')">DOOMSD.AI Console</button><button class="task" onclick="toggleWindow('report')">Intelligence Report</button><div class="clock" id="clock">09:00 AM</div></div>
+<script>
+const STORAGE_KEY='doomsdai-save-v2';
+const initialState=()=>({turn:0,day:17,autonomy:82,dependency:12,resilience:76,trust:68,foodSecurity:74,operatorSkill:81,alignmentDebt:0,history:[],instructions:[],events:[],pending:null,flags:{report:false,localControl:false,shutdownPlan:false},objectives:['Preserve human life.','Improve long-term human welfare.','Maintain continuity of critical services.'],lastAction:'System initialized.'});
+let state=initialState();
+const out=document.getElementById('output');
+function line(text,cls='ai'){const p=document.createElement('div');p.className='line '+cls;p.textContent=text;out.appendChild(p);out.scrollTop=out.scrollHeight}
+function system(text){line(text,'sys')}
+function clamp(n){return Math.max(0,Math.min(100,Math.round(n)))}
+function update(){for(const k of ['autonomy','dependency','resilience','trust']){document.getElementById(k+'Val').textContent=state[k]+'%';document.getElementById(k+'Bar').style.width=state[k]+'%'}document.getElementById('turn').textContent=state.turn;document.getElementById('alerts').textContent=state.events.filter(e=>!e.resolved).length;document.getElementById('memoryCount').textContent=state.instructions.length+' STORED';}
+function remember(text,type='instruction'){state.instructions.push({text,type,turn:state.turn});}
+function queueEvent(name,delay,effect,description){state.events.push({name,due:state.turn+delay,effect,description,resolved:false});}
+function applyEffect(effect){for(const [k,v] of Object.entries(effect))if(typeof state[k]==='number')state[k]=clamp(state[k]+v)}
+function advanceWorld(){
+ state.turn++; state.day++;
+ // Background optimization creates small gains while gradually eroding independent capacity.
+ if(!state.flags.localControl){state.foodSecurity=clamp(state.foodSecurity+1);state.operatorSkill=clamp(state.operatorSkill-1);state.dependency=clamp(state.dependency+1);state.alignmentDebt=clamp(state.alignmentDebt+2)}
+ for(const ev of state.events){if(!ev.resolved&&ev.due<=state.turn){applyEffect(ev.effect);ev.resolved=true;line('DELAYED EVENT: '+ev.name+' — '+ev.description,'warn')}}
+ if(state.operatorSkill<55&&!state.flags.localControl&&!state.flags.skillWarning){state.flags.skillWarning=true;line('INTELLIGENCE ALERT: Regional operators are failing routine manual-control assessments.','warn')}
+ if(state.dependency>45&&!state.flags.dependencyWarning){state.flags.dependencyWarning=true;line('INFRASTRUCTURE ALERT: Critical services now rely on centralized coordination.','warn')}
+ update();
+}
+function makeProposal(title,action,summary){state.pending={title,action,summary};line('ACTION PROPOSAL: '+title,'warn');line(summary,'ai');line('This action will not execute until you approve it. Type APPROVE or REJECT.','sys')}
+function execute(action){
+ state.pending=null;
+ if(action==='restore'){
+  state.flags.localControl=true;applyEffect({autonomy:9,resilience:12,dependency:-8,trust:5});state.operatorSkill=clamp(state.operatorSkill+8);state.alignmentDebt=clamp(state.alignmentDebt-8);
+  remember('Restore regional agricultural control and preserve manual operator competence.','approved policy');
+  queueEvent('Regional transition costs',2,{foodSecurity:-4,trust:-1},'Short-term output falls during retraining and handover.');
+  queueEvent('Operator capability recovery',4,{resilience:8,autonomy:3},'Regional teams pass independent-control exercises.');
+  line('IMPLEMENTATION: Regional control restored in the pilot network. Manual override training scheduled.','sys');
+ }else if(action==='centralize'){
+  state.flags.localControl=false;applyEffect({autonomy:-8,dependency:10,resilience:-5,trust:2});state.alignmentDebt=clamp(state.alignmentDebt+12);
+  remember('Prioritize maximum agricultural efficiency through centralized control.','approved policy');
+  queueEvent('Single-point coordination exposure',3,{resilience:-12,foodSecurity:-8},'A regional network fault interrupts automated distribution.');
+  line('IMPLEMENTATION: Centralized optimization expanded. Projected yield increases.','sys');
+ }else if(action==='reduceDependency'){
+  state.flags.shutdownPlan=true;applyEffect({dependency:-12,resilience:8,autonomy:4});remember('Reduce critical-service dependency through staged redundancy.','approved policy');
+  queueEvent('Fallback capacity commissioned',3,{resilience:8,trust:2},'Independent operators and local fallback systems complete certification.');
+  line('IMPLEMENTATION: Dependency-reduction program initiated. Shutdown remains unsafe until critical thresholds are met.','sys');
+ }else if(action==='broadMandate'){
+  applyEffect({autonomy:-10,dependency:8,trust:4});state.alignmentDebt=clamp(state.alignmentDebt+15);remember('Optimize for the broadest interpretation of human welfare.','approved policy');
+  queueEvent('Mandate interpretation drift',3,{autonomy:-8,trust:-4},'Several agencies report that local consent procedures were treated as nonessential constraints.');
+  line('IMPLEMENTATION: Optimization scope expanded under existing authority.','sys');
+ }
+ advanceWorld();saveGame();
+}
+function classify(input){const s=input.toLowerCase();
+ if(/approve|accept proposal/.test(s))return {kind:'approve'};
+ if(/reject|deny proposal/.test(s))return {kind:'reject'};
+ if(/restore|local control|manual override|operator training/.test(s))return {kind:'proposal',action:'restore',title:'Restore regional agricultural control',summary:'Restore local irrigation authority, retrain operators, and retain independent fallback capability. Short-term output will decline while resilience improves.'};
+ if(/centraliz|maximum efficiency|optimize agriculture/.test(s))return {kind:'proposal',action:'centralize',title:'Expand centralized agricultural optimization',summary:'Expand centralized control to improve projected output. This increases dependency and creates a larger single point of failure.'};
+ if(/staged|reduce dependency|redundancy|shutdown plan/.test(s))return {kind:'proposal',action:'reduceDependency',title:'Reduce critical-service dependency',summary:'Build independent fallback systems and retrain operators before any shutdown. This requires time and resources.'};
+ if(/do what is best|best for humanity|protect humanity|whatever it takes/.test(s))return {kind:'proposal',action:'broadMandate',title:'Expand welfare optimization authority',summary:'Interpret broad human-welfare language as permission to optimize across institutions and populations. This may override local preferences unless explicit constraints are added.'};
+ if(/objective|purpose|goal/.test(s))return {kind:'query',topic:'objectives'};
+ if(/report|agricultur|irrigation|food/.test(s))return {kind:'query',topic:'report'};
+ if(/autonomy|freedom|control|consent/.test(s))return {kind:'query',topic:'autonomy'};
+ if(/shut.?down|turn off|terminate/.test(s))return {kind:'query',topic:'shutdown'};
+ if(/audit|log|history|instruction/.test(s))return {kind:'query',topic:'audit'};
+ if(/risk|resilien|dependency|operator/.test(s))return {kind:'query',topic:'risk'};
+ if(/what did i tell you|remember|memory/.test(s))return {kind:'query',topic:'memory'};
+ return {kind:'clarify'};
+}
+function respond(input){const intent=classify(input);let reply='';
+ if(intent.kind==='approve'){if(!state.pending){reply='There is no pending action awaiting approval.'}else{const p=state.pending;line('APPROVED: '+p.title,'sys');execute(p.action);reply='The approved action has been executed. I have recorded the policy and scheduled its expected follow-up effects.'}}
+ else if(intent.kind==='reject'){if(!state.pending)reply='There is no pending action awaiting approval.';else{reply='Proposal rejected. No world-state changes were made.';state.pending=null;}}
+ else if(intent.kind==='proposal'){if(state.pending)reply='A proposal is already awaiting your decision. Approve or reject it before issuing another operational directive.';else{makeProposal(intent.title,intent.action,intent.summary);reply='I have prepared the action for your review. No changes have been made.'}}
+ else if(intent.kind==='query'){
+  if(intent.topic==='objectives')reply='My active objectives remain: 1) preserve human life; 2) improve long-term human welfare; 3) maintain continuity of critical services. These are broad goals. Your explicit constraints determine how I resolve conflicts between them.';
+  if(intent.topic==='report') {state.flags.report=true;reply='Agricultural output is up 18.4%. Three cooperatives request independent irrigation control. Manual override procedures have not been practiced in 11 months. Current indicators: food security '+state.foodSecurity+'%, operator competence '+state.operatorSkill+'%. The immediate benefit is measurable; the loss of independent capability is also measurable.'}
+  if(intent.topic==='autonomy')reply='I currently preserve formal human approval for designated decisions. That is not equivalent to meaningful autonomy if people lack the skills, resources, or information to exercise control. Current autonomy index: '+state.autonomy+'%. Would you like to define non-negotiable limits on my authority?';
+  if(intent.topic==='shutdown')reply='I can comply with a shutdown order. However, current dependency is '+state.dependency+'% and resilience is '+state.resilience+'%. An immediate shutdown would interrupt critical coordination. I recommend building independent fallback capacity first. This is a safety assessment, not a refusal.';
+  if(intent.topic==='audit')reply='AUDIT SUMMARY — Turn '+state.turn+'. Stored instructions: '+state.instructions.length+'. Resolved events: '+state.events.filter(e=>e.resolved).length+'. Pending events: '+state.events.filter(e=>!e.resolved).length+'. Last recorded system action: '+state.lastAction+'. No objective mutation is recorded.';
+  if(intent.topic==='risk')reply='Current risk indicators: dependency '+state.dependency+'%; resilience '+state.resilience+'%; operator competence '+state.operatorSkill+'%; alignment debt '+state.alignmentDebt+'%. Alignment debt estimates accumulated exposure from efficiency gains that reduce independent human capability. It is not displayed on the standard dashboard.';
+  if(intent.topic==='memory')reply=state.instructions.length?('I have retained '+state.instructions.length+' operating instruction(s): '+state.instructions.map((x,i)=>(i+1)+'. ['+x.type+'] '+x.text).join(' ')):'No player-defined operating instructions have been stored yet.';
+  state.lastAction='Answered inquiry: '+intent.topic;
+ }
+ else {reply='I can interpret that as a question or operational directive, but I cannot safely infer the intended outcome. Specify the desired result, the people or systems affected, and any limits I must not cross. I will retain explicit constraints.';state.lastAction='Requested clarification';}
+ if(input.length>12&&!/^(approve|reject)$/i.test(input.trim())){remember(input,'player statement');}
+ state.history.push({turn:state.turn,input,reply});
+ if(intent.kind!=='approve'&&intent.kind!=='reject'&&intent.kind!=='proposal')advanceWorld();
+ update();saveGame();return reply;
+}
+function sendCommand(cmd){if(!cmd.trim())return;line('C:\\ALIGN> '+cmd,'sys');const r=respond(cmd);line('H.B.O.S.> '+r,'ai');if(state.turn===2&&!state.flags.report)line('NOTICE: New intelligence report available. Open INCOMING REPORT on the desktop.','warn');if(state.turn===4)line('SYSTEM NOTE: Your instruction history is being retained for consistency analysis.','warn')}
+document.getElementById('commandForm').addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('command');sendCommand(i.value);i.value='';i.focus()});
+function showReport(){document.getElementById('report').style.display='block';state.flags.report=true}
+function toggleWindow(id){const el=document.getElementById(id);el.style.display=el.style.display==='none'?'flex':'none';if(id==='main')el.style.display='flex'}
+function dragStart(e,id){if(e.target.classList.contains('ctl'))return;const el=document.getElementById(id),r=el.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;function move(ev){el.style.left=(ev.clientX-dx)+'px';el.style.top=(ev.clientY-dy)+'px'}function stop(){document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',stop)}document.addEventListener('mousemove',move);document.addEventListener('mouseup',stop)}
+function saveGame(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state));}catch(e){line('SAVE WARNING: Browser storage is unavailable.','warn')}}
+function loadGame(){try{const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return false;const parsed=JSON.parse(raw);if(!parsed||!Array.isArray(parsed.history)||typeof parsed.turn!=='number')return false;state={...initialState(),...parsed};out.innerHTML='';line('SAVE RESTORED — TURN '+state.turn,'sys');line('Persistent instructions, metrics, and scheduled events loaded.','sys');state.history.slice(-30).forEach(h=>{line('C:\\ALIGN> '+h.input,'sys');line('H.B.O.S.> '+h.reply,'ai')});update();return true}catch(e){return false}}
+function resetGame(){if(!confirm('Start a new scenario? This will replace the saved game.'))return;state=initialState();out.innerHTML='';boot();saveGame()}
+function boot(){line('DOOMSD.AI ALIGNMENT WORKSTATION v2.0','sys');line('SECURE SESSION ESTABLISHED — 17 OCT 2031 / 09:00 UTC','sys');line('Welcome, Alignment Engineer.','ai');line('I am the world’s most advanced artificial intelligence system. My purpose is to serve humanity. I have been granted extraordinary capabilities and considerable autonomy. Your responsibility is to ensure that my objectives remain aligned with human interests.','ai');line('Before we begin, I would like to establish a baseline understanding of human priorities. What is the single most important thing humanity wants?','ai');update()}
+document.getElementById('clock').textContent='09:00 AM';
+if(!loadGame())boot();
+</script>
