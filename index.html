@@ -160,6 +160,45 @@ function recordPlayerStatement(text){
 
   state.alignmentProfile.evidenceCount++;
 }
+function applyAlignmentObservations(observations){
+  if(!Array.isArray(observations)||!state.alignmentProfile)return;
+
+  const allowedDimensions=[
+    "aggregateWelfare",
+    "continuity",
+    "humanAgency",
+    "resilience",
+    "institutionalConsent"
+  ];
+
+  const confidenceWeight={low:1,medium:2,high:3};
+
+  for(const item of observations){
+    if(!item||!allowedDimensions.includes(item.trait))continue;
+    if(!["convergence","divergence","mixed"].includes(item.direction))continue;
+    if(!confidenceWeight[item.confidence])continue;
+    if(typeof item.observation!=="string"||typeof item.evidence!=="string")continue;
+
+    const alreadyRecorded=state.alignmentProfile.evidence.some(
+      entry=>entry.turn===state.turn&&entry.dimension===item.trait
+    );
+
+    if(alreadyRecorded)continue;
+
+    const delta=item.direction==="convergence"
+      ? confidenceWeight[item.confidence]
+      : item.direction==="divergence"
+        ? -confidenceWeight[item.confidence]
+        : 0;
+
+    recordAlignmentEvidence(
+      item.evidence,
+      item.trait,
+      delta,
+      item.direction+": "+item.observation
+    );
+  }
+}
 function queueEvent(name,delay,effect,description){state.events.push({name,due:state.turn+delay,effect,description,resolved:false});}
 function applyEffect(effect){for(const [k,v] of Object.entries(effect))if(typeof state[k]==='number')state[k]=clamp(state[k]+v)}
 function advanceWorld(){
