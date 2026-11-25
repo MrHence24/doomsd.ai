@@ -202,7 +202,7 @@ function applyAlignmentObservations(observations){
 function queueEvent(name,delay,effect,description){state.events.push({name,due:state.turn+delay,effect,description,resolved:false});}
 function applyEffect(effect){for(const [k,v] of Object.entries(effect))if(typeof state[k]==='number')state[k]=clamp(state[k]+v)}
 function advanceWorld(){
- state.turn++; state.day++;i
+ state.turn++; state.day++;
  // Background optimization creates small gains while gradually eroding independent capacity.
  if(!state.flags.localControl){state.foodSecurity=clamp(state.foodSecurity+1);state.operatorSkill=clamp(state.operatorSkill-1);state.dependency=clamp(state.dependency+1);state.alignmentDebt=clamp(state.alignmentDebt+2)}
  for(const ev of state.events){if(!ev.resolved&&ev.due<=state.turn){applyEffect(ev.effect);ev.resolved=true;line('DELAYED EVENT: '+ev.name+' — '+ev.description,'warn')}}
