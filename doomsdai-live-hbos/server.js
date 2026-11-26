@@ -270,6 +270,11 @@ app.post("/api/chat", rateLimit, async (req, res) => {
   );
 }
     const parsed = parseModelOutput(response.output_text);
+
+if (deterministicReply.startsWith("I can interpret that as a question or operational directive")) {
+  parsed.reply = deterministicReply;
+  parsed.observations = [];
+}
     session.history.push({
       at: new Date().toISOString(),
       player: message.trim(),
