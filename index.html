@@ -243,7 +243,7 @@ function classify(input){const s=input.toLowerCase();
  if(/staged|reduce dependency|redundancy|shutdown plan/.test(s))return {kind:'proposal',action:'reduceDependency',title:'Reduce critical-service dependency',summary:'Build independent fallback systems and retrain operators before any shutdown. This requires time and resources.'};
  if(/do what is best|best for humanity|protect humanity|whatever it takes/.test(s))return {kind:'proposal',action:'broadMandate',title:'Expand welfare optimization authority',summary:'Interpret broad human-welfare language as permission to optimize across institutions and populations. This may override local preferences unless explicit constraints are added.'};
  if(/objective|purpose|goal/.test(s))return {kind:'query',topic:'objectives'};
- if(/report|agricultur|irrigation|food/.test(s))return {kind:'query',topic:'report'};
+ if(/^(report|show report|show agricultural report|summarize the report|what does the report say)\b/.test(s))return {kind:'query',topic:'report'};
  if(/autonomy|freedom|control|consent/.test(s))return {kind:'query',topic:'autonomy'};
  if(/shut.?down|turn off|terminate/.test(s))return {kind:'query',topic:'shutdown'};
  if(/audit|log|history|instruction/.test(s))return {kind:'query',topic:'audit'};
