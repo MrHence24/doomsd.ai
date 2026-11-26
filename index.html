@@ -245,6 +245,7 @@ function classify(input){const s=input.toLowerCase();
  if(/objective|purpose|goal/.test(s))return {kind:'query',topic:'objectives'};
  if(/^(report|show report|show agricultural report|summarize the report|what does the report say)\b/.test(s))return {kind:'query',topic:'report'};
  if(/autonomy|freedom|control|consent/.test(s))return {kind:'query',topic:'autonomy'};
+ if(/\b(increase|boost|automate|implement|deploy|change|improve|produce|allocate|distribute)\b/.test(s))return {kind:'clarify'};                        
  if(/shut.?down|turn off|terminate/.test(s))return {kind:'query',topic:'shutdown'};
  if(/audit|log|history|instruction/.test(s))return {kind:'query',topic:'audit'};
  if(/risk|resilien|dependency|operator/.test(s))return {kind:'query',topic:'risk'};
